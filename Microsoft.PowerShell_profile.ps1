@@ -47,6 +47,7 @@ function global:update {
     if (!$container) {
         $container = getContainer
     }
+    docker exec -it $container composer clearcache
     docker exec -it $container composer update
 }
 
