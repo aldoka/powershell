@@ -166,12 +166,27 @@ function global:tagClear {
 }
 
 function global:sshtest {
+    & putty
 	Write-Verbose -Message "$([System.Environment]::GetEnvironmentVariable('PhlowSSHPathPhrase'))" -Verbose
 	colortool --quiet campbell.ini
 	ssh developer@localhost -p1701
 }
 
 function global:sshprod {
+    & putty
 	colortool --quiet OneHalfLight.itermcolors
 	ssh developer@localhost -p9701
+}
+
+function global:putty {
+    $pageant = Get-Process pageant -ErrorAction SilentlyContinue
+    if (! $pageant) {
+        & pageant.exe "c:\Users\user\.ssh\phlow_bastion.ppk" "c:\Users\user\.ssh\id_rsa.ppk" -c "c:\Program Files\PuTTY\putty.exe" -load "Phlow"
+    } else {
+        $putty = Get-Process putty -ErrorAction SilentlyContinue
+        if (! $putty) {
+            & "c:\Program Files\PuTTY\putty.exe" -load "Phlow"
+        }
+    }
+
 }
