@@ -16,7 +16,7 @@ function global:up {
         $windowsLineEndingChanged = 0
         Write-Verbose -Message "Windows line ending are not fixed in '$($path)'. File not found." -Verbose
     }
-	
+
 	docker-compose up -d --build --force-recreate
 
     if ($windowsLineEndingChanged) {
@@ -148,7 +148,7 @@ function global:tagClear {
             $gitTagCommands = @()
             foreach ($tag in $tagsToDelete) {
                 $gitTagDeleteCommands = $gitTagDeleteCommands + "`ngit tag --delete $($tag)"
-            }	
+            }
             Write-Verbose -Message $gitTagDeleteCommands -Verbose
 
             foreach ($tag in $tagsToDelete) {
