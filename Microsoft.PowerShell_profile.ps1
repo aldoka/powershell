@@ -166,7 +166,7 @@ function global:tagClear {
 }
 
 function global:sshtest {
-	Write-Verbose -Message "p14qdbj8QE8Zo27cjCKP" -Verbose
+	Write-Verbose -Message "$([System.Environment]::GetEnvironmentVariable('PhlowSSHPathPhrase'))" -Verbose
 	colortool --quiet campbell.ini
 	ssh developer@localhost -p1701
 }
