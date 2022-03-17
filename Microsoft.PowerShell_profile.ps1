@@ -16,14 +16,8 @@ function global:up {
         $windowsLineEndingChanged = 0
         Write-Verbose -Message "Windows line ending are not fixed in '$($path)'. File not found." -Verbose
     }
-    
-
-    if (Test-Path "docker-compose.local.yml" -PathType leaf) {
-        Write-Verbose -Message "Using docker-compose.local.yml" -Verbose
-        docker-compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
-    } else {
-        docker-compose up -d --build
-    }
+	
+	docker-compose up -d --build --force-recreate
 
     if ($windowsLineEndingChanged) {
         (Get-Content $path -Raw).Replace("`n", "`r`n") | Set-Content -NoNewline $path -Force
@@ -47,6 +41,7 @@ function global:update {
     if (!$container) {
         $container = getContainer
     }
+    docker exec -it $container composer clearcache
     docker exec -it $container composer update
 }
 
@@ -153,7 +148,7 @@ function global:tagClear {
             $gitTagCommands = @()
             foreach ($tag in $tagsToDelete) {
                 $gitTagDeleteCommands = $gitTagDeleteCommands + "`ngit tag --delete $($tag)"
-            }
+            }	
             Write-Verbose -Message $gitTagDeleteCommands -Verbose
 
             foreach ($tag in $tagsToDelete) {
@@ -168,4 +163,15 @@ function global:tagClear {
             Write-Warning 'cancelled'
         }
     }
+}
+
+function global:sshtest {
+	Write-Verbose -Message "p14qdbj8QE8Zo27cjCKP" -Verbose
+	colortool --quiet campbell.ini
+	ssh developer@localhost -p1701
+}
+
+function global:sshprod {
+	colortool --quiet OneHalfLight.itermcolors
+	ssh developer@localhost -p9701
 }
