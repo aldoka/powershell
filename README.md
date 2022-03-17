@@ -7,5 +7,8 @@
 2. update
 3. install
 4. tag
-4. tagClean
-5. flush
+5. newTag
+6. tagClear
+7. flush
+8. sshtest
+9. sshprod
