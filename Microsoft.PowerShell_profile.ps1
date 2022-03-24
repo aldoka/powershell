@@ -188,5 +188,89 @@ function global:putty {
             & "c:\Program Files\PuTTY\putty.exe" -load "Phlow"
         }
     }
+}
 
+function global:proxy {
+    & rootCertificate
+    $subDomain = $args[0]
+
+    $confFolder = ".\certbot\conf\live\$subDomain"
+    $rootCertificateConfig = ".\certbot\conf\root\rootCertificateConfig.cnf"
+    $crt = "$confFolder\$subDomain.crt"
+    $csr = "$confFolder\$subDomain.csr"
+    $key = "$confFolder\$subDomain.key"
+
+    New-Item -Path $confFolder -ItemType Directory -Force
+
+    if (-Not (Test-Path -Path $crt -PathType Leaf)) {
+        $openSslReq = Start-Process openssl -ArgumentList "req -new -sha256 -nodes -out $csr -newkey rsa:2048 -keyout $key -config $rootCertificateConfig" -NoNewWindow -Wait -PassThru
+        $openSslReq.WaitForExit()
+
+        $domainConfig = "$confFolder\domainCerticateConfig.cfg"
+
+        if (-Not (Test-Path -Path $domainConfig -PathType Leaf)) {
+            $exampleDomainConfig = ".\certbot\conf\root\domainCertificateConfig.cfg.example"
+
+            Copy-Item $exampleDomainConfig $domainConfig
+            ((Get-Content -path $domainConfig -Raw) -replace '{SUBDOMAINNAME}', $subDomain) | Set-Content -Path $domainConfig
+        }
+
+        $rootSSLCrt = ".\certbot\conf\root\rootSSL.crt"
+        $rootSSLKey = ".\certbot\conf\root\rootSSL.key"
+
+        $openSslX509 = Start-Process openssl -ArgumentList "x509 -req -in $csr -CA $rootSSLCrt -CAkey $rootSSLKey -CAcreateserial -out $crt -days 500 -sha256 -extfile $rootCertificateConfig" -NoNewWindow -Wait -PassThru
+        $openSslX509.WaitForExit()
+    }
+
+    $newConfig = createHostConfig($subDomain)
+    ((Get-Content -path $newConfig -Raw) -replace '#', '') | Set-Content -Path $newConfig
+
+    $notepad = Start-Process notepad -ArgumentList $newConfig -Wait -PassThru
+    $notepad.WaitForExit()
+
+    docker-compose restart
+}
+
+function global:rootCertificate {
+    $rootSSLKey = ".\certbot\conf\root\rootSSL.key"
+    $sslParams = ".\certbot\conf\ssl-dhparams.pem"
+
+    if (-Not (Test-Path -Path $rootSSLKey -PathType Leaf) -Or -Not (Test-Path -Path $sslParams -PathType Leaf))
+    {
+        Write-Verbose -Message "No $rootSSLKey or $sslParams file found. Generating a root certificate" -Verbose
+
+        & createHostConfig("auth.dev.phlow.com")
+
+        $dockerCompose = Start-Process docker-compose -ArgumentList "up -d --build" -NoNewWindow -Wait -PassThru
+        $dockerCompose.WaitForExit()
+
+        & curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$sslParams"
+
+        $rootSSLCrt = ".\certbot\conf\root\rootSSL.crt"
+        $rootCertificateConfig = ".\certbot\conf\root\rootCertificateConfig.cnf"
+
+        $openSslGenrsa = Start-Process openssl -ArgumentList "genrsa -des3 -out $rootSSLKey 2048" -NoNewWindow -Wait -PassThru
+        $openSslGenrsa.WaitForExit()
+
+        $openSslReq = Start-Process openssl -ArgumentList "req -x509 -sha256 -days 1100 -key $rootSSLKey -out $rootSSLCrt -config $rootCertificateConfig" -NoNewWindow -Wait -PassThru
+        $openSslReq.WaitForExit()
+    }
+}
+
+function createHostConfig([string]$subDomain) {
+    $arraySubDomain = $subDomain.Split(".")
+    [array]::Reverse($arraySubDomain)
+    $ofs = "."
+    $conf = ".\proxy\hosts\$arraySubDomain.conf"
+
+    if (-Not (Test-Path -Path $conf -PathType Leaf)) {
+        Write-Verbose -Message "No $conf file found. Creating." -Verbose
+
+        $exampleConfig = ".\proxy\hosts\default.443.conf.example"
+
+        Copy-Item $exampleConfig $conf
+        ((Get-Content -path $conf -Raw) -replace '{HOSTNAME}', $subDomain) | Set-Content -Path $conf
+    }
+
+    return $conf
 }
