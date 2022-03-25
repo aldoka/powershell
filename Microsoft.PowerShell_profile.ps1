@@ -267,7 +267,7 @@ function createHostConfig([string]$subDomain) {
     if (-Not (Test-Path -Path $conf -PathType Leaf)) {
         Write-Verbose -Message "No $conf file found. Creating." -Verbose
 
-        $exampleConfig = ".\proxy\hosts\default.443.conf.example"
+        $exampleConfig = ".\proxy\hosts\default.443.win.conf.example"
 
         Copy-Item $exampleConfig $conf
         ((Get-Content -path $conf -Raw) -replace '{HOSTNAME}', $subDomain) | Set-Content -Path $conf
