@@ -206,7 +206,7 @@ function global:proxy {
         $openSslReq = Start-Process openssl -ArgumentList "req -new -sha256 -nodes -out $csr -newkey rsa:2048 -keyout $key -config $rootCertificateConfig" -NoNewWindow -Wait -PassThru
         $openSslReq.WaitForExit()
 
-        $domainConfig = "$confFolder\domainCerticateConfig.cfg"
+        $domainConfig = "$confFolder\domainCertificateConfig.cfg"
 
         if (-Not (Test-Path -Path $domainConfig -PathType Leaf)) {
             $exampleDomainConfig = ".\certbot\conf\root\domainCertificateConfig.cfg.example"
@@ -218,7 +218,7 @@ function global:proxy {
         $rootSSLCrt = ".\certbot\conf\root\rootSSL.crt"
         $rootSSLKey = ".\certbot\conf\root\rootSSL.key"
 
-        $openSslX509 = Start-Process openssl -ArgumentList "x509 -req -in $csr -CA $rootSSLCrt -CAkey $rootSSLKey -CAcreateserial -out $crt -days 500 -sha256 -extfile $rootCertificateConfig" -NoNewWindow -Wait -PassThru
+        $openSslX509 = Start-Process openssl -ArgumentList "x509 -req -in $csr -CA $rootSSLCrt -CAkey $rootSSLKey -CAcreateserial -out $crt -sha256 -extfile $domainConfig" -NoNewWindow -Wait -PassThru
         $openSslX509.WaitForExit()
     }
 
