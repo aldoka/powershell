@@ -225,7 +225,7 @@ function global:proxy {
     $newConfig = createHostConfig($subDomain)
     ((Get-Content -path $newConfig -Raw) -replace '#', '') | Set-Content -Path $newConfig
 
-    $notepad = Start-Process notepad -ArgumentList $newConfig -Wait -PassThru
+    $notepad = Start-Process notepad++ -ArgumentList $newConfig -Wait -PassThru
     $notepad.WaitForExit()
 
     docker-compose restart
@@ -244,7 +244,8 @@ function global:rootCertificate {
         $dockerCompose = Start-Process docker-compose -ArgumentList "up -d --build" -NoNewWindow -Wait -PassThru
         $dockerCompose.WaitForExit()
 
-        & curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$sslParams"
+        Write-Host -NoNewLine 'Run in the command line .\letsencrypt.sh -d auth.dev.phlow.com -e sergey@phlow.com Then press any key to continue...';
+        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 
         $rootSSLCrt = ".\certbot\conf\root\rootSSL.crt"
         $rootCertificateConfig = ".\certbot\conf\root\rootCertificateConfig.cnf"
